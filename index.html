@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050508">
+<link rel="manifest" href="./manifest.webmanifest">
+<title>Yassin Reels</title>
+<style>
+:root{--bg:#050508;--fg:#fff;--muted:#c9c9d2;--v:#7C5CFF;--p:#FF4D8D;--y:#FFD23F;--line:rgba(255,255,255,.12)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:Arial,"Cairo",sans-serif;overflow:hidden}
+button,input,select{font:inherit}
+#app,.feed{height:100%}
+.feed{overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior-y:contain}
+.feed::-webkit-scrollbar{display:none}
+.reel{height:100svh;scroll-snap-align:start;position:relative;background:#000}
+.player{position:absolute;inset:0}.player>div,.player iframe,.local-video{width:100%;height:100%;border:0;object-fit:cover}
+.cover{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.04) 48%,rgba(0,0,0,.82) 100%);pointer-events:none}
+.top{position:fixed;z-index:20;top:0;left:0;right:0;padding:calc(12px + env(safe-area-inset-top)) 14px 24px;background:linear-gradient(180deg,rgba(0,0,0,.58),transparent);display:flex;justify-content:space-between;align-items:center}
+.logo{font-weight:1000;font-size:21px}.logo b{color:var(--y)}
+.parent{border:1px solid var(--line);background:rgba(0,0,0,.36);color:#fff;padding:8px 12px;border-radius:999px;font-weight:900}
+.copy{position:absolute;z-index:5;right:16px;left:86px;bottom:calc(22px + env(safe-area-inset-bottom))}
+.tag{display:inline-block;background:rgba(124,92,255,.92);padding:7px 10px;border-radius:999px;font-size:12px;font-weight:900}
+.copy h2{margin:8px 0 5px;font-size:28px;line-height:1.25;text-shadow:0 2px 10px #000}.copy p{margin:0;color:#eee;font-weight:700;line-height:1.6;text-shadow:0 2px 10px #000}.src{font-size:11px;color:#ccc;margin-top:7px}
+.actions{position:absolute;z-index:6;left:12px;bottom:calc(22px + env(safe-area-inset-bottom));display:grid;gap:10px}
+.round{width:56px;height:56px;border-radius:50%;border:1px solid var(--line);background:rgba(0,0,0,.38);color:#fff;font-size:23px}
+.gate{position:fixed;inset:0;z-index:80;background:linear-gradient(160deg,#15111c,#050508);display:grid;place-items:center;padding:24px}
+.gatein{max-width:420px;text-align:center}.face{font-size:78px}.gate h1{font-size:38px;margin:8px 0}.gate p{color:#ddd;line-height:1.8;font-weight:700}.start{width:100%;border:0;border-radius:22px;padding:16px;background:linear-gradient(135deg,var(--v),var(--p));color:#fff;font-weight:1000;font-size:18px}
+.loading,.err{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:28px;background:#0c0c10;z-index:2}.err{display:none}.err.show{display:grid}.err button{border:0;border-radius:16px;padding:12px 16px;background:linear-gradient(135deg,var(--v),var(--p));color:#fff;font-weight:900}
+.modal{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.78);display:none;align-items:flex-end}.modal.open{display:flex}
+.sheet{width:100%;max-height:88vh;overflow:auto;background:#15151d;border-radius:28px 28px 0 0;padding:18px}.handle{width:52px;height:5px;background:#555;border-radius:999px;margin:0 auto 14px}
+.box{background:#1d1d26;border:1px solid var(--line);border-radius:18px;padding:12px;margin-top:10px}.box label{display:block;font-size:12px;color:#ccc;margin:8px 0 4px}.box select,.box input{width:100%;background:#0d0d12;border:1px solid var(--line);color:#fff;border-radius:12px;padding:11px}
+.btn{border:0;border-radius:14px;padding:11px 13px;font-weight:900;background:linear-gradient(135deg,var(--v),var(--p));color:#fff}
+.note{font-size:12px;color:#bbb;line-height:1.7}.close{position:absolute;top:12px;left:12px;width:40px;height:40px;border:0;border-radius:50%;background:#262632;color:#fff;font-size:20px}
+@media(min-width:720px){.reel{max-width:480px;margin:auto;border-inline:1px solid #202027}.top{max-width:480px;margin:auto}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="gate" id="gate">
+    <div class="gatein">
+      <div class="face">👦🏻</div>
+      <h1>يلا نتكلم يا ياسين</h1>
+      <p>ريلز تعليمية قصيرة باللهجة المصرية. شوف، اسمع، وقلّد.</p>
+      <button class="start" id="start">ابدأ الريلز ▶</button>
+    </div>
+  </div>
+
+  <div class="top">
+    <div class="logo">Yassin <b>Reels</b></div>
+    <button class="parent" id="parentBtn">⚙️ للأهل</button>
+  </div>
+
+  <main id="feed" class="feed"></main>
+
+  <div class="modal" id="modal">
+    <div class="sheet">
+      <button class="close" id="close">×</button>
+      <div class="handle"></div>
+      <h2>Parent Mode</h2>
+      <div class="box">
+        <label>تكرار كل Reel</label>
+        <select id="repeat">
+          <option value="1">مرة</option><option value="2" selected>مرتين</option><option value="3">3 مرات</option>
+        </select>
+        <label>نوع المحتوى</label>
+        <select id="filter">
+          <option value="all">الكل</option><option value="speech">كلام وتواصل</option><option value="actions">أفعال</option><option value="concepts">ألوان وأرقام ومفاهيم</option>
+        </select>
+        <button class="btn" id="apply" style="width:100%;margin-top:10px">تطبيق</button>
+      </div>
+      <div class="box">
+        <h3>فيديو خاص بيايسن لاحقًا</h3>
+        <label>عنوان</label><input id="title" placeholder="مثال: ياسين بيشرب مَيَّه">
+        <label>الفئة</label>
+        <select id="localCat"><option value="speech">كلام وتواصل</option><option value="actions">أفعال</option><option value="concepts">مفاهيم</option></select>
+        <label>الفيديو</label><input id="file" type="file" accept="video/*">
+        <button class="btn" id="add" style="width:100%;margin-top:10px">إضافة للـFeed</button>
+        <p class="note">الفيديو المحلي يظل على نفس الجهاز أثناء الجلسة. النسخة التالية ممكن تربطه بتخزين دائم.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+const SOURCE = [
+ {id:'s1',type:'yt',v:'a2fnmfbddPU',start:805,end:845,cat:'speech',title:'جُمل بسيطة 1',text:'اسمع الجملة وكررها مع الفيديو',src:'Abgad Hawaz'},
+ {id:'s2',type:'yt',v:'a2fnmfbddPU',start:845,end:885,cat:'speech',title:'جُمل بسيطة 2',text:'شوف الموقف واسمع الكلام',src:'Abgad Hawaz'},
+ {id:'s3',type:'yt',v:'a2fnmfbddPU',start:885,end:925,cat:'speech',title:'جُمل بسيطة 3',text:'كرر الجملة مع الفيديو',src:'Abgad Hawaz'},
+ {id:'s4',type:'yt',v:'a2fnmfbddPU',start:925,end:965,cat:'speech',title:'جُمل بسيطة 4',text:'ركز في الحركة والكلام مع بعض',src:'Abgad Hawaz'},
+ {id:'a1',type:'yt',v:'a2fnmfbddPU',start:1047,end:1087,cat:'actions',title:'أفعال وعكسها 1',text:'شوف الحركة واسمع الكلمة',src:'Abgad Hawaz'},
+ {id:'a2',type:'yt',v:'a2fnmfbddPU',start:1087,end:1127,cat:'actions',title:'أفعال وعكسها 2',text:'اربط الحركة بالكلمة',src:'Abgad Hawaz'},
+ {id:'a3',type:'yt',v:'a2fnmfbddPU',start:1127,end:1167,cat:'actions',title:'أفعال وعكسها 3',text:'قلّد الحركة والكلام',src:'Abgad Hawaz'},
+ {id:'c1',type:'yt',v:'a2fnmfbddPU',start:0,end:180,cat:'concepts',title:'ألوان وحيوانات',text:'اسم الشيء واللون مع بعض',src:'Abgad Hawaz'},
+ {id:'c2',type:'yt',v:'a2fnmfbddPU',start:1204,end:1336,cat:'concepts',title:'ألوان وأرقام',text:'عدّ مع الفيديو',src:'Abgad Hawaz'},
+ {id:'z1',type:'yt',v:'7_-O3XevqJs',start:0,end:55,cat:'actions',title:'أفعال الطفل اليومية',text:'شوف الفعل واسمع اسمه',src:'ZODA'}
+];
+
+let reels=[...SOURCE], filter='all', repeat=Number(localStorage.getItem('yr_repeat')||2), started=false, players={}, timers={}, observer=null;
+const feed=document.getElementById('feed'), gate=document.getElementById('gate'), modal=document.getElementById('modal');
+const list=()=>filter==='all'?reels:reels.filter(x=>x.cat===filter);
+const cat=x=>x==='speech'?'كلام وتواصل':x==='actions'?'أفعال وحركات':'مفاهيم';
+
+function render(){
+  Object.values(players).forEach(p=>{try{p.destroy()}catch(e){}}); players={};
+  Object.values(timers).forEach(clearTimeout); timers={};
+  feed.innerHTML=list().map((r,i)=>`
+  <section class="reel" data-i="${i}">
+    <div class="player">
+      ${r.type==='yt'?`<div id="yt-${i}"></div>`:`<video class="local-video" src="${r.url}" playsinline></video>`}
+      <div class="loading">▶️<br><b>${r.title}</b></div>
+      <div class="err"><div><h3>الفيديو ده رفض التشغيل داخل التطبيق</h3><p>هنعدّيه ونكمّل باقي الـFeed.</p><button class="skip">التالي</button></div></div>
+    </div>
+    <div class="cover"></div>
+    <div class="copy"><span class="tag">${cat(r.cat)}</span><h2>${r.title}</h2><p>${r.text}</p><div class="src">${r.src||'فيديو من العيلة'}</div></div>
+    <div class="actions"><button class="round replay">🔁</button><button class="round next">⬆️</button></div>
+  </section>`).join('');
+  bind(); observe();
+}
+function makePlayer(sec,i,r){
+  if(players[i]||!window.YT||!YT.Player)return;
+  players[i]=new YT.Player('yt-'+i,{
+    videoId:r.v,
+    playerVars:{autoplay:0,controls:0,playsinline:1,rel:0,fs:0,disablekb:1,start:r.start},
+    events:{
+      onReady:e=>{sec.querySelector('.loading').style.display='none'; try{e.target.seekTo(r.start,true);e.target.unMute();e.target.playVideo();loop(i,r)}catch(x){fail(sec)}},
+      onError:()=>fail(sec)
+    }
+  });
+}
+function fail(sec){sec.querySelector('.loading').style.display='none';sec.querySelector('.err').classList.add('show')}
+function loop(i,r){
+  clearTimeout(timers[i]); let n=1, dur=Math.max(8,r.end-r.start)*1000;
+  const f=()=>{const p=players[i];if(!p)return;if(n<repeat){n++;try{p.seekTo(r.start,true);p.playVideo()}catch(e){}timers[i]=setTimeout(f,dur)}else{try{p.pauseVideo()}catch(e){}}};
+  timers[i]=setTimeout(f,dur);
+}
+function stopOthers(i){
+  Object.entries(players).forEach(([k,p])=>{if(+k!==i)try{p.pauseVideo()}catch(e){}});
+  document.querySelectorAll('.local-video').forEach(v=>{if(+v.closest('.reel').dataset.i!==i)v.pause()})
+}
+function play(sec){
+  if(!started)return; const i=+sec.dataset.i,r=list()[i];if(!r)return;stopOthers(i);
+  if(r.type==='yt'){
+    if(window.YT&&YT.Player){ if(!players[i])makePlayer(sec,i,r); else{try{players[i].seekTo(r.start,true);players[i].unMute();players[i].playVideo();loop(i,r)}catch(e){fail(sec)}}}
+    else setTimeout(()=>play(sec),250);
+  } else {
+    sec.querySelector('.loading').style.display='none'; const v=sec.querySelector('video');v.currentTime=0;v.muted=false;v.play().catch(()=>{});
+  }
+}
+function observe(){if(observer)observer.disconnect();observer=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting&&e.intersectionRatio>.72)play(e.target)}),{root:feed,threshold:[.72]});document.querySelectorAll('.reel').forEach(x=>observer.observe(x))}
+function bind(){
+  document.querySelectorAll('.replay').forEach(b=>b.onclick=()=>play(b.closest('.reel')));
+  document.querySelectorAll('.next,.skip').forEach(b=>b.onclick=()=>{const n=b.closest('.reel').nextElementSibling;if(n)n.scrollIntoView({behavior:'smooth'})})
+}
+document.getElementById('start').onclick=()=>{started=true;gate.style.display='none';const f=document.querySelector('.reel');if(f)play(f)};
+document.getElementById('parentBtn').onclick=()=>modal.classList.add('open');document.getElementById('close').onclick=()=>modal.classList.remove('open');
+document.getElementById('apply').onclick=()=>{repeat=+document.getElementById('repeat').value;filter=document.getElementById('filter').value;localStorage.setItem('yr_repeat',repeat);modal.classList.remove('open');render();if(started)setTimeout(()=>{const f=document.querySelector('.reel');if(f)play(f)},100)};
+document.getElementById('add').onclick=()=>{const f=document.getElementById('file').files[0];if(!f){alert('اختار فيديو الأول');return}const u=URL.createObjectURL(f);reels.splice(2,0,{id:'l'+Date.now(),type:'local',url:u,cat:document.getElementById('localCat').value,title:document.getElementById('title').value||'فيديو ياسين',text:'شوف واسمع وقلّد',src:'فيديو من العيلة'});render();alert('اتضاف للـFeed')};
+document.getElementById('repeat').value=repeat;
+render();
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
+</script>
+</body>
+</html>

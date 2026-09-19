@@ -1,0 +1,11 @@
+{
+  "name": "Yassin Educational Reels",
+  "short_name": "Yassin Reels",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#050508",
+  "theme_color": "#050508",
+  "lang": "ar",
+  "dir": "rtl",
+  "description": "ريلز تعليمية عربية لمساعدة الطفل على ربط الكلام بالحركة والموقف."
+}
